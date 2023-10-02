@@ -25,16 +25,19 @@ async function getBlurb(title, theme) {
         messages: [
           {
             role: "assistant",
-            content: `Generate a short manga blurb no more than 1000 characters given this title (${title}) and theme (${theme})`
+            content: `Generate a short manga blurb no more than 100 words given this title (${title}) and theme (${theme})`
           },
         ],
         model: "gpt-3.5-turbo"
-      })
+      }),
     });
     const data = await response.json();
     return data.choices[0].message.content;
+
   } catch (err) {
-    console.log(err);
+    console.log("Error fetching blurb:", err);
+    alert("An error occurred while generating the blurb. Please try again.");
+    return null;
   }
 
 }
@@ -59,12 +62,13 @@ async function getCoverImage(blurb) {
         prompt: shortenedPrompt
       })
     });
-
     const data = await response.json();
     return data.data[0].url;
-  } catch (error) {
-    console.error("Error generating cover image:", error);
-    throw error;
+
+  } catch (err) {
+    console.error("Error generating cover image:", err);
+    alert("An error occurred while generating the cover image. Please try again.");
+    return null;
   }
 }
 
@@ -113,14 +117,18 @@ async function handleFormSubmission(e) {
   const spinner = document.getElementById("spinner");
   spinner.classList.remove("hidden");
 
+
   try {
     const blurb = await getBlurb(title, theme);
-    blurbElement.innerText = blurb;
-    blurbElement.classList.remove("hidden");
-
-    const imageUrl = await getCoverImage(blurb);
-    imageElement.src = imageUrl;
-    imageElement.classList.remove("hidden");
+    if (blurb) {
+      blurbElement.innerText = blurb;
+      blurbElement.classList.remove("hidden");
+      const imageUrl = await getCoverImage(blurb);
+      if (imageUrl) {
+        imageElement.src = imageUrl;
+        imageElement.classList.remove("hidden");
+      }
+    }
 
     spinner.classList.add("hidden");
     generateButton.classList.remove("hidden");
@@ -128,8 +136,10 @@ async function handleFormSubmission(e) {
     titleInput.disabled = false;
     themeInput.disabled = false;
 
-  } catch (error) {
-    console.error("Error handling form submission:", error);
+  } catch (err) {
+    console.error("Error handling form submission:", err);
+    alert("An error occurred while trying to submit your form. Please try again.");
+    return;
   }
 
 }
